@@ -2,11 +2,8 @@
 #include <BWAPI.h>
 #include <vector>
 #include <set>
-#include <windows.h>
-#include <Shlwapi.h>
 #include <iostream>
 #include <fstream>
-#include "Timer.h"
 #include <iostream>
 #include <cstdlib>
 #include <sstream>
@@ -42,7 +39,6 @@ public:
   virtual void moveCamera(BWAPI::Position pos, int priority);
   virtual void moveCamera(BWAPI::Unit unit, int priority);
   virtual void moveCameraIsAttacking();
-  virtual void moveCameraIsUnderAttack();
   virtual void moveCameraScoutWorker();
   virtual void moveCameraFallingNuke();
   virtual void moveCameraNukeDetect(BWAPI::Position target);

@@ -2,7 +2,6 @@
 
 using namespace BWAPI;
 
-
 CameraModule::CameraModule()
 {
 	cameraMoveTime = 150;
@@ -18,6 +17,7 @@ CameraModule::CameraModule()
 
 void CameraModule::onStart(BWAPI::Position startPos, int screenWidth, int screenHeight)
 {
+	Broodwar->sendText("Hello world!");
 	myStartLocation = startPos;
 	cameraFocusPosition = startPos;
 	currentCameraPosition = startPos;
@@ -28,7 +28,6 @@ void CameraModule::onStart(BWAPI::Position startPos, int screenWidth, int screen
 void CameraModule::onFrame()
 {
 	moveCameraFallingNuke();
-	moveCameraIsUnderAttack();
 	moveCameraIsAttacking();
 	if (Broodwar->getFrameCount() <= watchScoutWorkerUntil) {
 		moveCameraScoutWorker();
@@ -69,6 +68,7 @@ bool CameraModule::isNearStartLocation(BWAPI::Position pos) {
 }
 
 bool CameraModule::isNearOwnStartLocation(BWAPI::Position pos) {
+	return false;
 	int distance = 10 * TILE_SIZE; // 10*32
 	return (myStartLocation.getDistance(pos) <= distance);
 }
@@ -89,23 +89,6 @@ bool CameraModule::shouldMoveCamera(int priority) {
 	return isTimeToMove || (isHigherPrio && isTimeToMoveIfHigherPrio);
 }
 
-void CameraModule::moveCameraIsUnderAttack()
-{
-	int prio = 3;
-	if (!shouldMoveCamera(prio))
-	{
-		return;
-	}
-
-	for each (BWAPI::Unit unit in BWAPI::Broodwar->self()->getUnits())
-	{
-		if (unit->isUnderAttack())
-		{
-			moveCamera(unit, prio);
-		}
-	}
-}
-
 void CameraModule::moveCameraIsAttacking()
 {
 	int prio = 3;
@@ -114,7 +97,7 @@ void CameraModule::moveCameraIsAttacking()
 		return;
 	}
 
-	for each (BWAPI::Unit unit in BWAPI::Broodwar->self()->getUnits())
+	for (BWAPI::Unit unit : BWAPI::Broodwar->getAllUnits())
 	{
 		if (unit->isAttacking())
 		{
@@ -130,7 +113,7 @@ void CameraModule::moveCameraFallingNuke() {
 		return;
 	}
 
-	for each (BWAPI::Unit unit in BWAPI::Broodwar->getAllUnits())
+	for (BWAPI::Unit unit : BWAPI::Broodwar->getAllUnits())
 	{
 		if (unit->getType() == UnitTypes::Terran_Nuclear_Missile && unit->getVelocityY() > 0)
 		{
@@ -149,7 +132,8 @@ void CameraModule::moveCameraScoutWorker() {
 		return;
 	}
 
-	for each (BWAPI::Unit unit in BWAPI::Broodwar->self()->getUnits()) {
+	for (BWAPI::Unit unit : BWAPI::Broodwar->getAllUnits())
+	{
 		if (!unit->getType().isWorker()) {
 			continue;
 		}
@@ -179,7 +163,8 @@ void CameraModule::moveCameraDrop() {
 	{
 		return;
 	}
-	for each (BWAPI::Unit unit in BWAPI::Broodwar->self()->getUnits()) {
+	for (BWAPI::Unit unit : BWAPI::Broodwar->getAllUnits())
+	{
 		if ((unit->getType() == UnitTypes::Zerg_Overlord || unit->getType() == UnitTypes::Terran_Dropship || unit->getType() == UnitTypes::Protoss_Shuttle)
 			&& isNearStartLocation(unit->getPosition()) && unit->getLoadedUnits().size() > 0) {
 			moveCamera(unit, prio);
@@ -200,14 +185,16 @@ void CameraModule::moveCameraArmy() {
 	BWAPI::Unit bestPosUnit;
 	int mostUnitsNearby = 0;
 
-	for each (BWAPI::Unit unit1 in BWAPI::Broodwar->getAllUnits()) {
+	for (BWAPI::Unit unit1 : BWAPI::Broodwar->getAllUnits())
+	{
 		if (!isArmyUnit(unit1)) {
 			continue;
 		}
 		BWAPI::Position uPos = unit1->getPosition();
 
 		int nrUnitsNearby = 0;
-		for each (BWAPI::Unit unit2 in BWAPI::Broodwar->getUnitsInRadius(uPos, radius)) {
+		for (BWAPI::Unit unit2 : BWAPI::Broodwar->getUnitsInRadius(uPos, radius))
+		{
 			if (!isArmyUnit(unit2)) {
 				continue;
 			}
