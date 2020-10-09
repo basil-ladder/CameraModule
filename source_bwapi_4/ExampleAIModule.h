@@ -27,6 +27,7 @@ public:
   virtual void onUnitComplete(BWAPI::Unit unit);
   // Everything below this line is safe to modify.
   private:
-   CameraModule cameraModule; 
-
+   CameraModule cameraModule;
+   int screen_width;
+   int screen_height;
 };

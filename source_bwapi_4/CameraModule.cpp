@@ -17,7 +17,6 @@ CameraModule::CameraModule()
 
 void CameraModule::onStart(BWAPI::Position startPos, int screenWidth, int screenHeight)
 {
-	myStartLocation = startPos;
 	cameraFocusPosition = startPos;
 	currentCameraPosition = startPos;
 	scrWidth = screenWidth;
@@ -26,6 +25,30 @@ void CameraModule::onStart(BWAPI::Position startPos, int screenWidth, int screen
 
 void CameraModule::onFrame()
 {
+
+	if (Broodwar->getFrameCount() < 30 * 24)
+		localSpeed = 5;
+	else if (lastMovedPriority == 0)
+		localSpeed = 12;
+	else if (lastMovedPriority == 1)
+		localSpeed = 22;
+	else if (lastMovedPriority == 2)
+		localSpeed = 32;
+	else if (lastMovedPriority == 5)
+		localSpeed = 167;
+	else
+		localSpeed = 42;
+
+	Broodwar->setLocalSpeed(localSpeed);
+
+	if (localSpeed < 42 && (localSpeed >= 22 || std::chrono::duration_cast<std::chrono::seconds>(clock.now().time_since_epoch()).count() % 2 == 0))
+	{
+		Broodwar->setTextSize(Text::Size::Huge);
+		auto speed = ((84 + localSpeed / 2) / localSpeed) / 2.0;
+		Broodwar->drawTextScreen(Position(0, 6), "%c%cx%.1f", Text::Align_Right, Text::White, speed);
+		Broodwar->drawTextScreen(Position(0, 8), "%c%cx%.1f", Text::Align_Right, Text::Orange, speed);
+	}
+
 	moveCameraFallingNuke();
 	moveCameraIsUnderAttack();
 	moveCameraIsAttacking();
@@ -38,8 +61,8 @@ void CameraModule::onFrame()
 	updateCameraPosition();
 }
 
-
-bool CameraModule::isNearStartLocation(BWAPI::Position pos) {
+bool CameraModule::isNearStartLocation(BWAPI::Player player, BWAPI::Position pos)
+{
 	int distance = 1000;
 	BWAPI::Point<int, 32>::list startLocations = Broodwar->getStartLocations();
 
@@ -47,7 +70,8 @@ bool CameraModule::isNearStartLocation(BWAPI::Position pos) {
 		Position startLocation = BWAPI::Position(*it);
 		
 		// if the start position is not our own home, and the start position is closer than distance
-		if (!isNearOwnStartLocation(startLocation) && startLocation.getDistance(pos) <= distance) {
+		if (!isNearOwnStartLocation(player, startLocation) && startLocation.getDistance(pos) <= distance)
+		{
 			return true;
 		}
 	}
@@ -55,10 +79,10 @@ bool CameraModule::isNearStartLocation(BWAPI::Position pos) {
 	return false;
 }
 
-bool CameraModule::isNearOwnStartLocation(BWAPI::Position pos) {
-	return false;
+bool CameraModule::isNearOwnStartLocation(BWAPI::Player player, BWAPI::Position pos)
+{
 	int distance = 10 * TILE_SIZE; // 10*32
-	return (myStartLocation.getDistance(pos) <= distance);
+	return (Position(player->getStartLocation()).getDistance(pos) <= distance);
 }
 
 bool CameraModule::isArmyUnit(BWAPI::Unit unit) {
@@ -143,9 +167,12 @@ void CameraModule::moveCameraScoutWorker() {
 		if (!unit->getType().isWorker()) {
 			continue;
 		}
-		if (isNearStartLocation(unit->getPosition())) {
+		if (isNearStartLocation(unit->getPlayer(), unit->getPosition()))
+		{
 			moveCamera(unit, highPrio);
-		} else if (!isNearOwnStartLocation(unit->getPosition())) {
+		}
+		else if (!isNearOwnStartLocation(unit->getPlayer(), unit->getPosition()))
+		{
 			moveCamera(unit, lowPrio);
 		}
 	}
@@ -171,8 +198,8 @@ void CameraModule::moveCameraDrop() {
 	}
 	for (BWAPI::Unit unit : BWAPI::Broodwar->getAllUnits())
 	{
-		if ((unit->getType() == UnitTypes::Zerg_Overlord || unit->getType() == UnitTypes::Terran_Dropship || unit->getType() == UnitTypes::Protoss_Shuttle)
-			&& isNearStartLocation(unit->getPosition()) && unit->getLoadedUnits().size() > 0) {
+		if ((unit->getType() == UnitTypes::Zerg_Overlord || unit->getType() == UnitTypes::Terran_Dropship || unit->getType() == UnitTypes::Protoss_Shuttle) && isNearStartLocation(unit->getPlayer(), unit->getPosition()) && unit->getLoadedUnits().size() > 0)
+		{
 			moveCamera(unit, prio);
 		}
 	}

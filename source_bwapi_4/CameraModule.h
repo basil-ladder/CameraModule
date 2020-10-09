@@ -11,9 +11,6 @@
 
 class CameraModule
 {
-private:
-  BWAPI::Position myStartLocation;
-
 public:
   int scrWidth;
   int scrHeight;
@@ -29,8 +26,8 @@ public:
   CameraModule();
   void onStart(BWAPI::Position startPos, int screenWidth, int screenHeight);
   void onFrame();
-  bool isNearStartLocation(BWAPI::Position pos);
-  bool isNearOwnStartLocation(BWAPI::Position pos);
+  bool isNearStartLocation(BWAPI::Player player, BWAPI::Position pos);
+  bool isNearOwnStartLocation(BWAPI::Player player, BWAPI::Position pos);
   bool isArmyUnit(BWAPI::Unit unit);
   bool shouldMoveCamera(int priority);
   void moveCamera(BWAPI::Position pos, int priority);
@@ -50,4 +47,5 @@ private:
   std::chrono::time_point<std::chrono::steady_clock> lastMoved;
   std::chrono::duration<int> cameraMoveTime;
   std::chrono::duration<int> cameraMoveTimeMin;
+  int localSpeed;
 };

@@ -1,5 +1,6 @@
 #include "ExampleAIModule.h"
 #include <iostream>
+#include <iomanip>
 
 using namespace BWAPI;
 using namespace Filter;
@@ -30,8 +31,9 @@ void ExampleAIModule::onStart()
       startPosition = Position((*iter)->getStartLocation());
     }
   }
-
-  cameraModule.onStart(startPosition, std::stoi(env("OPENBW_SCREEN_WIDTH", "1280")), std::stoi(env("OPENBW_SCREEN_HEIGHT", "720")));
+  screen_width = std::stoi(env("OPENBW_SCREEN_WIDTH", "1280"));
+  screen_height = std::stoi(env("OPENBW_SCREEN_HEIGHT", "720"));
+  cameraModule.onStart(startPosition, screen_width, screen_height);
 }
 
 void ExampleAIModule::onEnd(bool isWinner)
@@ -41,29 +43,38 @@ void ExampleAIModule::onEnd(bool isWinner)
 void ExampleAIModule::onFrame()
 {
   cameraModule.onFrame();
-  Broodwar->setTextSize(Text::Size::Large);
 
   std::stringstream vsInfo;
+  std::stringstream resInfo;
   auto players = Broodwar->getPlayers();
   for (auto iter = players.cbegin(); iter != players.end(); ++iter)
   {
-    if (!(*iter)->isObserver() && !(*iter)->isNeutral())
+    auto player = *iter;
+    if (!player->isObserver() && !player->isNeutral())
     {
       if (vsInfo.tellp() > 0)
       {
         vsInfo << " vs ";
+        resInfo << "     -     ";
       }
       else
       {
         vsInfo << Text::Align_Center;
+        resInfo << Text::Align_Center;
       }
-      vsInfo << Text::Green;
-      vsInfo << (*iter)->getName();
+      vsInfo << player->getTextColor();
+      vsInfo << player->getName();
       vsInfo << Text::White;
+
+      resInfo << "m: " << std::setw(4) << player->minerals();
+      resInfo << "   g: " << std::setw(4) << player->gas();
+      resInfo << "   s: " << std::setw(4) << player->supplyUsed() / 2 << "/" << std::setw(4) << player->supplyTotal() / 2;
     }
   }
 
-  Broodwar->drawTextScreen(Positions::Origin, "%s", vsInfo.str().c_str());
+  Broodwar->setTextSize(Text::Size::Large);
+  Broodwar->drawTextScreen(Positions::Origin, vsInfo.str().c_str());
+  Broodwar->drawTextScreen(Position(0, 30), resInfo.str().c_str());
   Broodwar->setTextSize();
 }
 
