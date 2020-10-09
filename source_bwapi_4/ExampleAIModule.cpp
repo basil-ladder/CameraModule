@@ -42,7 +42,28 @@ void ExampleAIModule::onFrame()
 {
   cameraModule.onFrame();
   Broodwar->setTextSize(Text::Size::Large);
-  Broodwar->drawTextScreen(Positions::Origin, "%c%c%s", Text::Align_Center, Text::Green, "GOSU!");
+
+  std::stringstream vsInfo;
+  auto players = Broodwar->getPlayers();
+  for (auto iter = players.cbegin(); iter != players.end(); ++iter)
+  {
+    if (!(*iter)->isObserver() && !(*iter)->isNeutral())
+    {
+      if (vsInfo.tellp() > 0)
+      {
+        vsInfo << " vs ";
+      }
+      else
+      {
+        vsInfo << Text::Align_Center;
+      }
+      vsInfo << Text::Green;
+      vsInfo << (*iter)->getName();
+      vsInfo << Text::White;
+    }
+  }
+
+  Broodwar->drawTextScreen(Positions::Origin, "%s", vsInfo.str().c_str());
   Broodwar->setTextSize();
 }
 
