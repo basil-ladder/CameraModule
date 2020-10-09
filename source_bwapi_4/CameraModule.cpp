@@ -4,10 +4,10 @@ using namespace BWAPI;
 
 CameraModule::CameraModule()
 {
-	cameraMoveTime = 150;
-	cameraMoveTimeMin = 50;
+	cameraMoveTime = std::chrono::seconds(6);
+	cameraMoveTimeMin = std::chrono::seconds(2);
 	watchScoutWorkerUntil = 7500;
-	lastMoved = 0;
+	lastMoved = clock.now();
 	lastMovedPriority = 0;
 	lastMovedPosition = BWAPI::Position(0, 0);
 	cameraFocusPosition = BWAPI::Position(0, 0);
@@ -17,7 +17,6 @@ CameraModule::CameraModule()
 
 void CameraModule::onStart(BWAPI::Position startPos, int screenWidth, int screenHeight)
 {
-	Broodwar->sendText("Hello world!");
 	myStartLocation = startPos;
 	cameraFocusPosition = startPos;
 	currentCameraPosition = startPos;
@@ -28,6 +27,7 @@ void CameraModule::onStart(BWAPI::Position startPos, int screenWidth, int screen
 void CameraModule::onFrame()
 {
 	moveCameraFallingNuke();
+	moveCameraIsUnderAttack();
 	moveCameraIsAttacking();
 	if (Broodwar->getFrameCount() <= watchScoutWorkerUntil) {
 		moveCameraScoutWorker();
@@ -38,18 +38,6 @@ void CameraModule::onFrame()
 	updateCameraPosition();
 }
 
-bool CameraModule::isNearEnemyBuilding(BWAPI::Unit unit, std::set<BWAPI::Unit> &enemyUnits) {
-	for (std::set<BWAPI::Unit>::iterator it = enemyUnits.begin(); it != enemyUnits.end(); it++) {
-		if ((*it)->getType().isBuilding() 
-			&& unit->getDistance(*it) <= TILE_SIZE*20 
-			&& (Broodwar->self()->isEnemy((*it)->getPlayer()) || ((*it)->getPlayer()->isNeutral() && (*it)->getType().isAddon())) 
-			&& (*it)->getType() != UnitTypes::Terran_Vulture_Spider_Mine/* && !(*it)->isLifted()*/) {
-			return true;
-		}
-	}
-
-	return false;
-}
 
 bool CameraModule::isNearStartLocation(BWAPI::Position pos) {
 	int distance = 1000;
@@ -82,11 +70,29 @@ bool CameraModule::isArmyUnit(BWAPI::Unit unit) {
 }
 
 bool CameraModule::shouldMoveCamera(int priority) {
-	bool isTimeToMove = BWAPI::Broodwar->getFrameCount() - lastMoved >= cameraMoveTime;
-	bool isTimeToMoveIfHigherPrio = BWAPI::Broodwar->getFrameCount() - lastMoved >= cameraMoveTimeMin;
+	auto delta = clock.now() - lastMoved;
+	bool isTimeToMove = delta  >= cameraMoveTime;
+	bool isTimeToMoveIfHigherPrio = delta >= cameraMoveTimeMin;
 	bool isHigherPrio = lastMovedPriority < priority;
 	// camera should move IF: enough time has passed OR (minimum time has passed AND new prio is higher)
 	return isTimeToMove || (isHigherPrio && isTimeToMoveIfHigherPrio);
+}
+
+void CameraModule::moveCameraIsUnderAttack()
+{
+	int prio = 3;
+	if (!shouldMoveCamera(prio))
+	{
+		return;
+	}
+
+	for (BWAPI::Unit unit : BWAPI::Broodwar->getAllUnits())
+	{
+		if (unit->isUnderAttack())
+		{
+			moveCamera(unit, prio);
+		}
+	}
 }
 
 void CameraModule::moveCameraIsAttacking()
@@ -236,7 +242,7 @@ void CameraModule::moveCamera(BWAPI::Position pos, int priority) {
 
 	cameraFocusPosition = pos;
 	lastMovedPosition = cameraFocusPosition;
-	lastMoved = BWAPI::Broodwar->getFrameCount();
+	lastMoved = clock.now();
 	lastMovedPriority = priority;
 	followUnit = false;
 }
@@ -252,7 +258,7 @@ void CameraModule::moveCamera(BWAPI::Unit unit, int priority) {
 	
 	cameraFocusUnit = unit;
 	lastMovedPosition = cameraFocusUnit->getPosition();
-	lastMoved = BWAPI::Broodwar->getFrameCount();
+	lastMoved = clock.now();
 	lastMovedPriority = priority;
 	followUnit = true;
 }

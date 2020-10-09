@@ -10,69 +10,40 @@ extern "C" BWAPI::AIModule *newAIModule()
   return new ExampleAIModule();
 }
 
+std::string env(std::string name, std::string def)
+{
+  const char *s = std::getenv(name.c_str());
+  if (!s)
+    return def;
+  return s;
+}
+
+
 void ExampleAIModule::onStart()
 {
-  cameraModule.onStart(Position(0, 0), 1280, 720);
-  return;
-  // Hello World!
-  Broodwar->sendText("Hello world!");
-
-  // Print the map name.
-  // BWAPI returns std::string when retrieving a string, don't forget to add .c_str() when printing!
-  Broodwar << "The map is " << Broodwar->mapName() << "!" << std::endl;
-
-  // Enable the UserInput flag, which allows us to control the bot and type messages.
-  Broodwar->enableFlag(Flag::UserInput);
-
-  // Uncomment the following line and the bot will know about everything through the fog of war (cheat).
-  //Broodwar->enableFlag(Flag::CompleteMapInformation);
-
-  // Set the command optimization level so that common commands can be grouped
-  // and reduce the bot's APM (Actions Per Minute).
-  Broodwar->setCommandOptimizationLevel(2);
-
-  // Check if this is a replay
-  if (Broodwar->isReplay())
+  auto startPosition = Position(0, 0);
+  auto players = Broodwar->getPlayers();
+  for (auto iter = players.cbegin(); iter != players.end(); ++iter)
   {
-
-    // Announce the players in the replay
-    Broodwar << "The following players are in this replay:" << std::endl;
-
-    // Iterate all the players in the game using a std:: iterator
-    Playerset players = Broodwar->getPlayers();
-    for (auto p : players)
+    if (!(*iter)->isObserver() && !(*iter)->isNeutral())
     {
-      // Only print the player if they are not an observer
-      if (!p->isObserver())
-        Broodwar << p->getName() << ", playing as " << p->getRace() << std::endl;
+      startPosition = Position((*iter)->getStartLocation());
     }
   }
-  else // if this is not a replay
-  {
-    // Retrieve you and your enemy's races. enemy() will just return the first enemy.
-    // If you wish to deal with multiple enemies then you must use enemies().
-    if (Broodwar->enemy()) // First make sure there is an enemy
-      Broodwar << "The matchup is " << Broodwar->self()->getRace() << " vs " << Broodwar->enemy()->getRace() << std::endl;
-  }
+
+  cameraModule.onStart(startPosition, std::stoi(env("OPENBW_SCREEN_WIDTH", "1280")), std::stoi(env("OPENBW_SCREEN_HEIGHT", "720")));
 }
 
 void ExampleAIModule::onEnd(bool isWinner)
 {
-  // Called when the game ends
-  if (isWinner)
-  {
-    // Log your win here!
-  }
 }
 
 void ExampleAIModule::onFrame()
 {
   cameraModule.onFrame();
-  // Called once every game frame
-
-  // Display the game frame rate as text in the upper left area of the screen
-  Broodwar->drawTextScreen(200, 0, "FPS: %d", Broodwar->getFPS());
-  Broodwar->drawTextScreen(200, 20, "Average FPS: %f", Broodwar->getAverageFPS());
+  Broodwar->setTextSize(Text::Size::Large);
+  Broodwar->drawTextScreen(Positions::Origin, "%c%c%s", Text::Align_Center, Text::Green, "GOSU!");
+  Broodwar->setTextSize();
 }
 
 void ExampleAIModule::onSendText(std::string text)
@@ -93,9 +64,6 @@ void ExampleAIModule::onReceiveText(BWAPI::Player player, std::string text)
 
 void ExampleAIModule::onPlayerLeft(BWAPI::Player player)
 {
-  // Interact verbally with the other players in the game by
-  // announcing that the other player has left.
-  Broodwar->sendText("Goodbye %s!", player->getName().c_str());
 }
 
 void ExampleAIModule::onNukeDetect(BWAPI::Position target)
