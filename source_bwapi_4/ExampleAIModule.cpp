@@ -42,40 +42,43 @@ void ExampleAIModule::onEnd(bool isWinner)
 
 void ExampleAIModule::onFrame()
 {
-  cameraModule.onFrame();
-
   std::stringstream vsInfo;
-  std::stringstream resInfo;
   auto players = Broodwar->getPlayers();
+  auto first = true;
+  vsInfo << std::setfill('\x80') << Text::Align_Center;
   for (auto iter = players.cbegin(); iter != players.end(); ++iter)
   {
     auto player = *iter;
     if (!player->isObserver() && !player->isNeutral())
     {
-      if (vsInfo.tellp() > 0)
+      if (!first)
       {
-        vsInfo << " vs ";
-        resInfo << "     -     ";
+        vsInfo << "\x80vs\x80" << std::left;
+        vsInfo << player->getTextColor();
+        vsInfo << player->getName() << std::setw(3) << "" << std::right;
       }
-      else
-      {
-        vsInfo << Text::Align_Center;
-        resInfo << Text::Align_Center;
-      }
-      vsInfo << player->getTextColor();
-      vsInfo << player->getName();
       vsInfo << Text::White;
 
-      resInfo << "m: " << std::setw(4) << player->minerals();
-      resInfo << "   g: " << std::setw(4) << player->gas();
-      resInfo << "   s: " << std::setw(4) << player->supplyUsed() / 2 << "/" << std::setw(4) << player->supplyTotal() / 2;
+      vsInfo << "m: " << std::setw(4) << player->minerals();
+      vsInfo << "   g: " << std::setw(4) << player->gas();
+      vsInfo << "   s: " << std::setw(3) << (player->supplyUsed() + 1) / 2 << "/" << std::setw(3) << player->supplyTotal() / 2;
+
+      if (first)
+      {
+        vsInfo << std::setw(3) << "";
+        vsInfo << player->getTextColor();
+        vsInfo << player->getName();
+        first = false;
+      }
     }
   }
 
   Broodwar->setTextSize(Text::Size::Large);
-  Broodwar->drawTextScreen(Positions::Origin, vsInfo.str().c_str());
-  Broodwar->drawTextScreen(Position(0, 30), resInfo.str().c_str());
+  Broodwar->drawBoxScreen(0, 0, 1920, 24, Colors::Black, true);
+  Broodwar->drawTextScreen(Position(0, 3), vsInfo.str().c_str());
   Broodwar->setTextSize();
+
+  cameraModule.onFrame();
 }
 
 void ExampleAIModule::onSendText(std::string text)

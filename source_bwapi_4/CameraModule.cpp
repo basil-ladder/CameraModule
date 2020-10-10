@@ -21,6 +21,11 @@ void CameraModule::onStart(BWAPI::Position startPos, int screenWidth, int screen
 	currentCameraPosition = startPos;
 	scrWidth = screenWidth;
 	scrHeight = screenHeight;
+
+	if (Broodwar->getReplayFrameCount() < 2 * 60 * 24)
+	{
+		Broodwar->leaveGame();
+	}
 }
 
 void CameraModule::onFrame()
@@ -35,7 +40,7 @@ void CameraModule::onFrame()
 	else if (lastMovedPriority == 2)
 		localSpeed = 32;
 	else if (lastMovedPriority == 5)
-		localSpeed = 167;
+		localSpeed = 84;
 	else
 		localSpeed = 42;
 
@@ -45,9 +50,15 @@ void CameraModule::onFrame()
 	{
 		Broodwar->setTextSize(Text::Size::Huge);
 		auto speed = ((84 + localSpeed / 2) / localSpeed) / 2.0;
-		Broodwar->drawTextScreen(Position(0, 6), "%c%cx%.1f", Text::Align_Right, Text::White, speed);
-		Broodwar->drawTextScreen(Position(0, 8), "%c%cx%.1f", Text::Align_Right, Text::Orange, speed);
+		Broodwar->drawTextScreen(Position(6, 0), "%cx%.1f", Text::Orange, speed);
+		Broodwar->drawTextScreen(Position(8, 0), "%cx%.1f", Text::Yellow, speed);
+		Broodwar->setTextSize();
 	}
+	auto seconds = Broodwar->getFrameCount() / 24;
+	auto minutes = seconds / 60;
+	seconds %= 60;
+	Broodwar->setTextSize(Text::Size::Huge);
+	Broodwar->drawTextScreen(Position(0, 0), "%c%c%02d:%02d", Text::Align_Right, Text::White, minutes, seconds);
 
 	moveCameraFallingNuke();
 	moveCameraIsUnderAttack();
