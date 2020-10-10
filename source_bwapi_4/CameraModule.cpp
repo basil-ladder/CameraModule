@@ -54,7 +54,7 @@ void CameraModule::onFrame()
 		Broodwar->drawTextScreen(Position(8, 0), "%cx%.1f", Text::Yellow, speed);
 		Broodwar->setTextSize();
 	}
-	auto seconds = Broodwar->getFrameCount() / 24;
+	auto seconds = Broodwar->getFrameCount() * 42 / 1000;
 	auto minutes = seconds / 60;
 	seconds %= 60;
 	Broodwar->setTextSize(Text::Size::Huge);
@@ -97,11 +97,7 @@ bool CameraModule::isNearOwnStartLocation(BWAPI::Player player, BWAPI::Position 
 }
 
 bool CameraModule::isArmyUnit(BWAPI::Unit unit) {
-	return !(unit->getType().isWorker()
-		|| unit->getType().isBuilding()
-		|| unit->getType() == BWAPI::UnitTypes::Terran_Vulture_Spider_Mine
-		|| unit->getType() == BWAPI::UnitTypes::Zerg_Overlord
-		|| unit->getType() == BWAPI::UnitTypes::Zerg_Larva);
+	return !unit->getPlayer()->isNeutral() && !(unit->getType().isWorker() || unit->getType().isBuilding() || unit->getType() == BWAPI::UnitTypes::Terran_Vulture_Spider_Mine || unit->getType() == BWAPI::UnitTypes::Zerg_Overlord || unit->getType() == BWAPI::UnitTypes::Zerg_Larva);
 }
 
 bool CameraModule::shouldMoveCamera(int priority) {
