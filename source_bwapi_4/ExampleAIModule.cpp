@@ -54,6 +54,8 @@ void ExampleAIModule::onFrame()
       if (!first)
       {
         vsInfo << "\x80vs\x80" << std::left;
+        if (cameraModule.hasVision(player))
+          vsInfo << "*";
         vsInfo << player->getTextColor();
         vsInfo << player->getName() << std::setw(3) << "" << std::right;
       }
@@ -66,8 +68,11 @@ void ExampleAIModule::onFrame()
       if (first)
       {
         vsInfo << std::setw(3) << "";
+        if (cameraModule.hasVision(player))
+          vsInfo << "*";
         vsInfo << player->getTextColor();
         vsInfo << player->getName();
+        vsInfo << Text::White;
         first = false;
       }
     }

@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <sstream>
 #include <chrono>
+#include <bitset>
 
 class CameraModule
 {
@@ -41,11 +42,21 @@ public:
   void moveCameraArmy();
   void moveCameraUnitCreated(BWAPI::Unit unit);
   void updateCameraPosition();
+  void updateGameSpeed();
+  bool shouldUpdateVision(int priority);
+  void updateVision(BWAPI::Unit, int priority);
+  void updateVision(BWAPI::Player player, int priority);
+  void updateVision();
+  bool hasVision(BWAPI::Player player) { return vision[player->getID()]; }
 
 private:
+  typedef typename std::chrono::time_point<std::chrono::steady_clock> time_point_t;
   std::chrono::steady_clock clock;
-  std::chrono::time_point<std::chrono::steady_clock> lastMoved;
+
+  time_point_t lastMoved;
   std::chrono::duration<int> cameraMoveTime;
   std::chrono::duration<int> cameraMoveTimeMin;
   int localSpeed;
+
+  std::bitset<8> vision;
 };
