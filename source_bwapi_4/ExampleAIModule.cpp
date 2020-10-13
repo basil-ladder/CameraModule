@@ -31,56 +31,94 @@ void ExampleAIModule::onStart()
       startPosition = Position((*iter)->getStartLocation());
     }
   }
-  screen_width = std::stoi(env("OPENBW_SCREEN_WIDTH", "1280"));
-  screen_height = std::stoi(env("OPENBW_SCREEN_HEIGHT", "720"));
+#ifndef OPENBW
+  screen_width = std::stoi(env("SCREEN_WIDTH", "1280"));
+  screen_height = std::stoi(env("SCREEN_HEIGHT", "720"));
   cameraModule.onStart(startPosition, screen_width, screen_height);
+#else
+  screen_width = 0;
+#endif
 }
 
 void ExampleAIModule::onEnd(bool isWinner)
 {
 }
 
+inline int getCharWidth(uint8_t c, uint8_t bSize)
+{
+  if (c == '\t')
+    return 12 * bSize;
+  if (c < ' ')
+    return 0;
+  if (c == ' ')
+    return 3 * bSize;
+  return 6 * bSize;
+}
+
+inline int getTextWidth(const char *pszStr, uint8_t bSize)
+{
+  // Retrieve size
+  int size = 0;
+  for (; *pszStr; ++pszStr)
+    size += getCharWidth(*pszStr, bSize);
+
+  return size;
+}
+
 void ExampleAIModule::onFrame()
 {
-  std::stringstream vsInfo;
+#ifdef OPENBW
+  if (!screen_width)
+  {
+    screen_width = Broodwar->getScreenSize().x;
+    screen_height = Broodwar->getScreenSize().y;
+    if (screen_width)
+    {
+      cameraModule.onStart(Position(0, 0), screen_width, screen_height);
+    }
+    else
+    {
+      return;
+    }
+  }
+#endif
+
   auto players = Broodwar->getPlayers();
-  auto first = true;
-  vsInfo << std::setfill('\x80') << Text::Align_Center;
+  std::vector<std::string> lines;
+  auto maxLength = 0;
   for (auto iter = players.cbegin(); iter != players.end(); ++iter)
   {
     auto player = *iter;
     if (!player->isObserver() && !player->isNeutral())
     {
-      if (!first)
-      {
-        vsInfo << "\x80vs\x80" << std::left;
-        if (cameraModule.hasVision(player))
-          vsInfo << "*";
-        vsInfo << player->getTextColor();
-        vsInfo << player->getName() << std::setw(3) << "" << std::right;
-      }
-      vsInfo << Text::White;
+      std::stringstream line;
+      line << std::setfill('\x80') << Text::Align_Right;
+      line << player->getTextColor();
+      line << player->getName();
+      if (cameraModule.hasVision(player))
+        line << "*";
+      else
+        line << "\x80";
+      line << std::left;
 
-      vsInfo << "m: " << std::setw(4) << player->minerals();
-      vsInfo << "   g: " << std::setw(4) << player->gas();
-      vsInfo << "   s: " << std::setw(3) << (player->supplyUsed() + 1) / 2 << "/" << std::setw(3) << player->supplyTotal() / 2;
-
-      if (first)
-      {
-        vsInfo << std::setw(3) << "";
-        if (cameraModule.hasVision(player))
-          vsInfo << "*";
-        vsInfo << player->getTextColor();
-        vsInfo << player->getName();
-        vsInfo << Text::White;
-        first = false;
-      }
+      line << "   m " << std::setw(4) << player->minerals();
+      line << "   g " << std::setw(4) << player->gas();
+      line << "   s " << std::setw(3) << (player->supplyUsed() + 1) / 2 << "/" << std::setw(3) << player->supplyTotal() / 2;
+      auto linestr = line.str();
+      auto strlen = getTextWidth(linestr.c_str(), Text::Size::Large);
+      maxLength = maxLength > strlen ? maxLength : strlen;
+      lines.push_back(linestr);
     }
   }
-
+  Broodwar->drawBoxScreen(screen_width - maxLength - 16, 24, screen_width, 24 + 36, Colors::Black, true);
   Broodwar->setTextSize(Text::Size::Large);
-  Broodwar->drawBoxScreen(0, 0, 1920, 24, Colors::Black, true);
-  Broodwar->drawTextScreen(Position(0, 3), vsInfo.str().c_str());
+
+  for (size_t y = 0; y < lines.size(); y++)
+  {
+    Broodwar->drawTextScreen(Position(0, y * 16 + 26), lines[y].c_str());
+  }
+
+  //Broodwar->drawTextScreen(Position(0, 3), vsInfo.str().c_str());
   Broodwar->setTextSize();
 
   cameraModule.onFrame();
