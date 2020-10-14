@@ -13,6 +13,7 @@ CameraModule::CameraModule() : vision(0)
 	cameraFocusPosition = BWAPI::Position(0, 0);
 	cameraFocusUnit = NULL;
 	followUnit = false;
+	lastUnitDestroyedFrame = 2 * 60 * 24;
 }
 
 void CameraModule::onStart(BWAPI::Position startPos, int screenWidth, int screenHeight)
@@ -300,9 +301,14 @@ void CameraModule::updateCameraPosition() {
 	}
 }
 
+void CameraModule::onUnitDestroy(BWAPI::Unit unit)
+{
+	lastUnitDestroyedFrame = Broodwar->getFrameCount();
+}
+
 void CameraModule::updateGameSpeed()
 {
-	if (Broodwar->getFrameCount() < 30 * 24)
+	if (Broodwar->getFrameCount() < 30 * 24 || Broodwar->getFrameCount() > lastUnitDestroyedFrame + 5 * 60 * 24)
 		localSpeed = 5;
 	else if (lastMovedPriority == 0)
 		localSpeed = 12;

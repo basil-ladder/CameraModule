@@ -27,6 +27,7 @@ public:
   CameraModule();
   void onStart(BWAPI::Position startPos, int screenWidth, int screenHeight);
   void onFrame();
+  void onUnitDestroy(BWAPI::Unit unit);
   bool isNearStartLocation(BWAPI::Player player, BWAPI::Position pos);
   bool isNearOwnStartLocation(BWAPI::Player player, BWAPI::Position pos);
   bool isArmyUnit(BWAPI::Unit unit);
@@ -57,6 +58,7 @@ private:
   std::chrono::duration<int> cameraMoveTime;
   std::chrono::duration<int> cameraMoveTimeMin;
   int localSpeed;
+  int lastUnitDestroyedFrame;
 
   std::bitset<8> vision;
 };

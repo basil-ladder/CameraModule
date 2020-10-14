@@ -202,6 +202,7 @@ void ExampleAIModule::onUnitCreate(BWAPI::Unit unit)
 
 void ExampleAIModule::onUnitDestroy(BWAPI::Unit unit)
 {
+  cameraModule.onUnitDestroy(unit);
 }
 
 void ExampleAIModule::onUnitMorph(BWAPI::Unit unit)
