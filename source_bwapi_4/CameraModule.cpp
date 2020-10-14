@@ -2,7 +2,7 @@
 
 using namespace BWAPI;
 
-CameraModule::CameraModule() : vision(255)
+CameraModule::CameraModule() : vision(0)
 {
 	cameraMoveTime = std::chrono::seconds(6);
 	cameraMoveTimeMin = std::chrono::seconds(2);
@@ -77,7 +77,7 @@ bool CameraModule::isNearOwnStartLocation(BWAPI::Player player, BWAPI::Position 
 }
 
 bool CameraModule::isArmyUnit(BWAPI::Unit unit) {
-	return !unit->getPlayer()->isNeutral() && !(unit->getType().isWorker() || unit->getType().isBuilding() || unit->getType() == BWAPI::UnitTypes::Terran_Vulture_Spider_Mine || unit->getType() == BWAPI::UnitTypes::Zerg_Overlord || unit->getType() == BWAPI::UnitTypes::Zerg_Larva);
+	return !unit->getPlayer()->isNeutral() && unit->getType().canMove() && !(unit->getType().isWorker() || unit->getType() == BWAPI::UnitTypes::Terran_Vulture_Spider_Mine || unit->getType() == BWAPI::UnitTypes::Zerg_Overlord || unit->getType() == BWAPI::UnitTypes::Zerg_Larva);
 }
 
 bool CameraModule::shouldMoveCamera(int priority) {
@@ -350,7 +350,7 @@ void CameraModule::updateVision()
 {
 	if (shouldUpdateVision(0))
 	{
-		vision = 255;
+		vision = 0;
 	}
 
 	//	Broodwar << vision << std::endl;

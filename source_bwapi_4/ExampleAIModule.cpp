@@ -1,6 +1,7 @@
 #include "ExampleAIModule.h"
 #include <iostream>
 #include <iomanip>
+#include <numeric>
 
 using namespace BWAPI;
 using namespace Filter;
@@ -22,22 +23,7 @@ std::string env(std::string name, std::string def)
 
 void ExampleAIModule::onStart()
 {
-  auto startPosition = Position(0, 0);
-  auto players = Broodwar->getPlayers();
-  for (auto iter = players.cbegin(); iter != players.end(); ++iter)
-  {
-    if (!(*iter)->isObserver() && !(*iter)->isNeutral())
-    {
-      startPosition = Position((*iter)->getStartLocation());
-    }
-  }
-#ifndef OPENBW
-  screen_width = std::stoi(env("SCREEN_WIDTH", "1280"));
-  screen_height = std::stoi(env("SCREEN_HEIGHT", "720"));
-  cameraModule.onStart(startPosition, screen_width, screen_height);
-#else
   screen_width = 0;
-#endif
 }
 
 void ExampleAIModule::onEnd(bool isWinner)
@@ -67,21 +53,33 @@ inline int getTextWidth(const char *pszStr, uint8_t bSize)
 
 void ExampleAIModule::onFrame()
 {
-#ifdef OPENBW
   if (!screen_width)
   {
+#ifdef OPENBW
     screen_width = Broodwar->getScreenSize().x;
     screen_height = Broodwar->getScreenSize().y;
+#else
+    screen_width = std::stoi(env("SCREEN_WIDTH", "1280"));
+    screen_height = std::stoi(env("SCREEN_HEIGHT", "720"));
+#endif
     if (screen_width)
     {
-      cameraModule.onStart(Position(0, 0), screen_width, screen_height);
+      auto startPosition = Position(0, 0);
+      auto players = Broodwar->getPlayers();
+      for (auto iter = players.cbegin(); iter != players.end(); ++iter)
+      {
+        if (!(*iter)->isObserver() && !(*iter)->isNeutral())
+        {
+          startPosition = Position((*iter)->getStartLocation());
+        }
+      }
+      cameraModule.onStart(startPosition, screen_width, screen_height);
     }
     else
     {
       return;
     }
   }
-#endif
 
   auto players = Broodwar->getPlayers();
   std::vector<std::string> lines;
@@ -101,9 +99,18 @@ void ExampleAIModule::onFrame()
         line << "\x80";
       line << std::left;
 
+      auto playerUnits = player->getUnits();
+      auto workers = std::count_if(playerUnits.cbegin(), playerUnits.cend(), [](BWAPI::Unit unit) { return unit->isCompleted() && unit->getType().isWorker(); });
+      auto armySupply = std::accumulate(playerUnits.cbegin(), playerUnits.cend(), 0, [this](int sum, BWAPI::Unit unit) {
+                          return sum + (unit->isCompleted() && cameraModule.isArmyUnit(unit) ? unit->getType().supplyRequired() : 0);
+                        }) /
+                        2.0;
+
       line << "   m " << std::setw(4) << player->minerals();
       line << "   g " << std::setw(4) << player->gas();
       line << "   s " << std::setw(3) << (player->supplyUsed() + 1) / 2 << "/" << std::setw(3) << player->supplyTotal() / 2;
+      line << "   workers " << std::setw(3) << workers;
+      line << "   army " << std::setw(3) << armySupply;
       auto linestr = line.str();
       auto strlen = getTextWidth(linestr.c_str(), Text::Size::Large);
       maxLength = maxLength > strlen ? maxLength : strlen;
