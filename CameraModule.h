@@ -59,6 +59,10 @@ private:
   std::chrono::duration<int> cameraMoveTimeMin;
   int localSpeed;
   int lastUnitDestroyedFrame;
+  int combatAcc;
 
   std::bitset<8> vision;
+
+  void onCombat(BWAPI::Unit unit, int priority);
 };
+
