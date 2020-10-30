@@ -1,0 +1,3 @@
+[submodule "bwapi"]
+	path = bwapi
+	url = git@github.com:basil-ladder/bwapi.git
