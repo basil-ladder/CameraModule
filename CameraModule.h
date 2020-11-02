@@ -63,6 +63,6 @@ private:
 
   std::bitset<8> vision;
 
-  void onCombat(BWAPI::Unit unit, int priority);
+  void slowDownOnCombat();
 };
 

@@ -38,7 +38,9 @@ void CameraModule::onFrame()
 	seconds %= 60;
 	Broodwar->setTextSize(Text::Size::Huge);
 	Broodwar->drawTextScreen(Position(0, 0), "%c%c%02d:%02d", Text::Align_Right, Text::White, minutes, seconds);
+	//	Broodwar->drawTextScreen(Position(10, 30), "%d", combatAcc);
 
+	slowDownOnCombat();
 	moveCameraFallingNuke();
 	moveCameraIsUnderAttack();
 	moveCameraIsAttacking();
@@ -94,14 +96,19 @@ bool CameraModule::shouldMoveCamera(int priority)
 	return isTimeToMove || (isHigherPrio && isTimeToMoveIfHigherPrio);
 }
 
-void CameraModule::onCombat(BWAPI::Unit unit, int priority)
+void CameraModule::slowDownOnCombat()
 {
-	updateVision(unit, priority);
-	moveCamera(unit, priority);
-	combatAcc += 5;
-	if (combatAcc >= 100)
+	for (BWAPI::Unit unit : BWAPI::Broodwar->getAllUnits())
 	{
-		combatAcc = 100;
+		if (unit->isUnderAttack() || unit->isAttacking())
+		{
+			combatAcc += 2;
+			if (combatAcc >= 24 * 5)
+			{
+				combatAcc = 24 * 13;
+			}
+			return;
+		}
 	}
 }
 
@@ -117,7 +124,8 @@ void CameraModule::moveCameraIsUnderAttack()
 	{
 		if (unit->isUnderAttack())
 		{
-			onCombat(unit, prio);
+			updateVision(unit, prio);
+			moveCamera(unit, prio);
 			return;
 		}
 	}
@@ -135,7 +143,8 @@ void CameraModule::moveCameraIsAttacking()
 	{
 		if (unit->isAttacking())
 		{
-			onCombat(unit, prio);
+			updateVision(unit, prio);
+			moveCamera(unit, prio);
 			return;
 		}
 	}
@@ -342,7 +351,7 @@ void CameraModule::updateGameSpeed()
 {
 	if (Broodwar->getFrameCount() < 30 * 24 || Broodwar->getFrameCount() > lastUnitDestroyedFrame + 5 * 60 * 24)
 		localSpeed = 5;
-	else if (lastMovedPriority == 0 || combatAcc < 50)
+	else if (lastMovedPriority == 0 || combatAcc <= 24 * 3)
 		localSpeed = 12;
 	else if (lastMovedPriority == 1)
 		localSpeed = 22;
