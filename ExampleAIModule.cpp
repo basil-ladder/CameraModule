@@ -117,12 +117,12 @@ void ExampleAIModule::onFrame()
       lines.push_back(linestr);
     }
   }
-  Broodwar->drawBoxScreen(screen_width - maxLength - 16, 24, screen_width, 24 + 36, Colors::Black, true);
+  Broodwar->drawBoxScreen(screen_width - maxLength - 16, 24, screen_width, 24 + lines.size() * 18, Colors::Black, true);
   Broodwar->setTextSize(Text::Size::Large);
 
   for (size_t y = 0; y < lines.size(); y++)
   {
-    Broodwar->drawTextScreen(Position(0, y * 16 + 26), lines[y].c_str());
+    Broodwar->drawTextScreen(Position(0, y * 16 + 26), lines.at(y).c_str());
   }
 
   //Broodwar->drawTextScreen(Position(0, 3), vsInfo.str().c_str());
