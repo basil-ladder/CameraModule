@@ -110,7 +110,7 @@ void ExampleAIModule::onFrame()
       line << "   g " << std::setw(4) << player->gas();
       line << "   s " << std::setw(3) << (player->supplyUsed() + 1) / 2 << "/" << std::setw(3) << player->supplyTotal() / 2;
       line << "   workers " << std::setw(3) << workers;
-      line << "   army " << std::setw(3) << armySupply;
+      line << "   army " << std::setw(5) << armySupply;
       auto linestr = line.str();
       auto strlen = getTextWidth(linestr.c_str(), Text::Size::Large);
       maxLength = maxLength > strlen ? maxLength : strlen;
