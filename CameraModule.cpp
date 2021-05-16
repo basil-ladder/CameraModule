@@ -83,7 +83,7 @@ bool CameraModule::isNearOwnStartLocation(BWAPI::Player player, BWAPI::Position 
 
 bool CameraModule::isArmyUnit(BWAPI::Unit unit)
 {
-	return !unit->getPlayer()->isNeutral() && unit->getType().canMove() && !(unit->getType().isWorker() || unit->getType() == BWAPI::UnitTypes::Terran_Vulture_Spider_Mine || unit->getType() == BWAPI::UnitTypes::Zerg_Overlord || unit->getType() == BWAPI::UnitTypes::Zerg_Larva);
+	return !unit->getPlayer()->isNeutral() && unit->getType().supplyRequired() > 0 && !unit->getType().isWorker();
 }
 
 bool CameraModule::shouldMoveCamera(int priority)
